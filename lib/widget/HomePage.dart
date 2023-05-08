@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intranet/widget/reclamation.dart';
 import 'package:intranet/widget/tempsdetravail.dart';
 
@@ -9,27 +13,87 @@ import 'Formation.dart';
 import 'editprofile.dart';
 import 'fichedepaie.dart';
 import 'forum.dart';
+import 'package:http/http.dart' as http;
 
 
-class HomePage extends StatelessWidget {
+class Actualite {
+  final int? id;
+  final String? date;
+  final String? description;
+  final String? title;
+  final String? type;
+  final String? uri;
 
+  const Actualite({
+    required this.id,
+    required this.date,
+    required this.description,
+    required this.title,
+    required this.type,
+    required this.uri,
+  });
+
+  factory Actualite.fromJson(Map<String, dynamic> json) {
+    return Actualite(
+      id: json['id'],
+      date: json['date'],
+      description: json['description'],
+      title: json['title'],
+      type: json['type'],
+      uri: json['uri'],
+    );
+  }
+}
+Future<List<Actualite>> fetchActualite() async {
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'jwt');
+
+  final response = await http.get(Uri.parse('http://192.168.0.239:9090/actualite'),headers:{
+    HttpHeaders.contentTypeHeader:'application/json','X-Requested-With':'XMLHttpRequest',"authorization":"Bearer $token"
+
+  });
+  final jsonList = jsonDecode(response.body) as List<dynamic>;
+  print(jsonList);
+  final searchedUsers = [
+    for (final map in jsonList.cast<Map<String, dynamic>>())
+      Actualite.fromJson(map)
+
+  ];
+
+  print(searchedUsers);
+
+  return searchedUsers;
+}
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late Future<List<Actualite>> futureData;
+
+  @override
+  void initState() {
+    super.initState();
+    futureData = fetchActualite();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar:AppBar(
         backgroundColor: Colors.blueGrey,
         title: Text('Actualités'),
 
         actions: [
-      Padding(
-      padding: EdgeInsets.only(right: 10.0),
-          child:
-          Image(
-            image: AssetImage('assets/icon.png'),
-            width: 40,
-          ),
-      )
+          Padding(
+            padding: EdgeInsets.only(right: 10.0),
+            child:
+            Image(
+              image: AssetImage('assets/icon.png'),
+              width: 40,
+            ),
+          )
         ],
       ),
       drawer: Drawer(
@@ -201,154 +265,70 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-
-          children: [
-
-            Padding(
-              padding: EdgeInsets.only(left: 25.0,top: 40),
-              child: SizedBox(
-                width: 635,
-                height: 274,
-                child: Stack(
-                  children: <Widget>[
-                    Card(
-                      clipBehavior: Clip.antiAliasWithSaveLayer,
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            width: 335,
-                            height: 110,
-                            child: Image.network(
-                              'https://via.placeholder.com/300?text=DITTO',
-                              fit: BoxFit.fill,
-                            ),
-                          ),
-                        ],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      elevation: 5,
-                      margin: EdgeInsets.all(10),
+      body: FutureBuilder<List<Actualite>>(
+        future: futureData,
+        builder: (BuildContext context, AsyncSnapshot<List<Actualite>> snapshot) {
+          if (snapshot.hasData) {
+            final List<Actualite> act = snapshot.data!;
+            return ListView.builder(
+              itemCount: act.length,
+              itemBuilder: (BuildContext context, int index) {
+                final Actualite actualite = act[index];
+                return Padding(
+                  padding: EdgeInsets.all(10.0),
+                  child: Card(
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
                     ),
-                    Positioned(
-                      bottom: 80,
-                      left: 50,
-                      child: SizedBox(
-                        height: 50,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Title'),
-                            Text('Subtitle')
-                          ],
+                    elevation: 5,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: 335,
+                          height: 110,
+                          child: actualite.uri != null ?  Image.network(
+                            actualite.uri!,
+                            fit: BoxFit.fill,
+                            width: 40,
+                            height: 40,
+                          ) : Container(),
                         ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 25.0),
-              child: SizedBox(
-                width: 635,
-                height: 274,
-                child: Stack(
-                  children: <Widget>[
-                    Card(
-                      clipBehavior: Clip.antiAliasWithSaveLayer,
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            width: 335,
-                            height: 110,
-                            child: Image.network(
-                              'https://via.placeholder.com/300?text=DITTO',
-                              fit: BoxFit.fill,
-                            ),
+
+                        Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                actualite.title.toString() ?? '',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                actualite.description.toString() ?? '',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      elevation: 5,
-                      margin: EdgeInsets.all(10),
-                    ),
-                    Positioned(
-                      bottom: 80,
-                      left: 50,
-                      child: SizedBox(
-                        height: 50,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Title'),
-                            Text('Subtitle')
-                          ],
                         ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 25.0),
-              child: SizedBox(
-                width: 635,
-                height: 274,
-                child: Stack(
-                  children: <Widget>[
-                    Card(
-                      clipBehavior: Clip.antiAliasWithSaveLayer,
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            width: 335,
-                            height: 110,
-                            child: Image.network(
-                              'https://via.placeholder.com/300?text=DITTO',
-                              fit: BoxFit.fill,
-                            ),
-                          ),
-                        ],
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      elevation: 5,
-                      margin: EdgeInsets.all(10),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 80,
-                      left: 50,
-                      child: SizedBox(
-                        height: 50,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Title'),
-                            Text('Subtitle')
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      )
-
-
-
-
-
+                  ),
+                );
+              },
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('${snapshot.error}'));
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
     );
   }
 }

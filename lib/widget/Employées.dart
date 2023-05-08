@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intranet/widget/reclamation.dart';
 import 'package:intranet/widget/tempsdetravail.dart';
 
-import '../model/Users.dart';
+
 import 'DrawerHeader.dart';
 import 'Event.dart';
 import 'Formation.dart';
@@ -16,18 +16,18 @@ import 'fichedepaie.dart';
 import 'forum.dart';
 
 class Users {
-  final String Mat_Pers;
-  final String nom_PERS;
-  final String pren_PERS;
-  final String numerodetelephone;
-  final String email;
+  final String? Mat_Pers;
+  final String? nom_PERS;
+  final String? pren_PERS;
+  final String? numerodetelephone;
+  final String? email;
 
   const Users({
     required this.Mat_Pers,
-    required this.nom_PERS,
-    required this.pren_PERS,
-    required this.numerodetelephone,
-    required this.email,
+    required  this.nom_PERS,
+    required  this.pren_PERS,
+    required  this.numerodetelephone,
+    required  this.email,
   });
 
   factory Users.fromJson(Map<String, dynamic> json) => new Users
@@ -42,6 +42,7 @@ class Users {
       email: json['email'],
 
   );
+
 }
 
 Future<List<Users>> fetchData() async {
@@ -52,21 +53,16 @@ Future<List<Users>> fetchData() async {
     HttpHeaders.contentTypeHeader:'application/json','X-Requested-With':'XMLHttpRequest',"authorization":"Bearer $token"
 
   });
+  final jsonList = jsonDecode(response.body) as List<dynamic>;
+  print(jsonList);
+  final searchedUsers = [
+    for (final map in jsonList.cast<Map<String, dynamic>>())
+      Users.fromJson(map)
 
-  if (response.statusCode == 200) {
-    final List jsonData = jsonDecode(response.body);
+  ];
+  print(searchedUsers);
 
-    final List<Users> users =
-    jsonData.map((jsonData) => Users.fromJson(jsonData)).toList();
-    List jsonResult = jsonDecode(response.body);
-    for (var value in jsonResult) {
-      Users Model = Users.fromJson(value);
-      print(Model);
-    }
-    return users;
-  } else {
-    throw Exception('Failed to fetch data');
-  }
+  return searchedUsers;
 }
 
 class Employes extends StatefulWidget {
@@ -76,6 +72,8 @@ class Employes extends StatefulWidget {
 
 class _MyTableState extends State<Employes> {
   late Future<List<Users>> futureData;
+
+
 
   @override
   void initState() {
@@ -88,7 +86,7 @@ class _MyTableState extends State<Employes> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueGrey,
-        title: Text('Mon compte'),
+        title: Text('Employées'),
 
         actions: [
           Padding(
@@ -277,38 +275,41 @@ class _MyTableState extends State<Employes> {
             final List<Users> users = snapshot.data!;
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columnSpacing: 15,
-                columns: [
-                  DataColumn(
-                    label: Text(
-                      'Nom et Prénom',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black87),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: DataTable(
+                  columnSpacing: 15,
+                  columns: [
+                    DataColumn(
+                      label: Text(
+                        'Nom et Prénom',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
                     ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Numéro de téléphone',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black87),
+                    DataColumn(
+                      label: Text(
+                        'Numéro de téléphone',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
                     ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Email',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black87),
+                    DataColumn(
+                      label: Text(
+                        'Email',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
                     ),
-                  ),
-                ],
-                rows: users
-                    .map((user) => DataRow(cells: [
-                  DataCell(Text(user.nom_PERS + ' ' + user.pren_PERS)),
-                  DataCell(Text(user.numerodetelephone)),
-                  DataCell(Text(user.email)),
-                ]))
-                    .toList(),
+                  ],
+                  rows: users
+                      .map((user) => DataRow(cells: [
+                    DataCell(Text('${user.nom_PERS.toString()} ${user.pren_PERS.toString()}')),
+                    DataCell(Text(user.numerodetelephone.toString())),
+                    DataCell(Text(user.email.toString())),
+                  ]))
+                      .toList(),
+                ),
               ),
             );
           } else if (snapshot.hasError) {
@@ -318,6 +319,7 @@ class _MyTableState extends State<Employes> {
           }
         },
       ),
+
     );
   }
 }
