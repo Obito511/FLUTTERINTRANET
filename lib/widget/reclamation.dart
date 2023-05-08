@@ -1,6 +1,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:intranet/controller/ReclamationController.dart';
 import 'package:intranet/widget/Employ%C3%A9es.dart';
 import 'package:intranet/widget/tempsdetravail.dart';
 import 'DrawerHeader.dart';
@@ -11,8 +12,13 @@ import 'fichedepaie.dart';
 import 'forum.dart';
 import 'Event.dart';
 
-
+TextEditingController emailController = TextEditingController();
+TextEditingController sujetController = TextEditingController();
+TextEditingController descriptionController = TextEditingController();
+TextEditingController departementController = TextEditingController();
+ReclamationController controller = new ReclamationController();
 class Reclamation extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -226,6 +232,7 @@ class MyCustomForm extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
           child: TextFormField(
+            controller:emailController ,
             decoration: const InputDecoration(
               border: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xffF02E65)),),
               labelText: 'Ecrire ton Email',
@@ -236,6 +243,7 @@ class MyCustomForm extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
           child: TextFormField(
+            controller:sujetController ,
             decoration: const InputDecoration(
               border: UnderlineInputBorder( borderSide: BorderSide(color: Colors.red),),
               labelText: 'Ecrire le sujet ',
@@ -246,6 +254,7 @@ class MyCustomForm extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
           child: TextFormField(
+            controller:descriptionController ,
             decoration: const InputDecoration(
               border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.red),),
               labelText: 'Ecrire la description',
@@ -269,7 +278,12 @@ class MyCustomForm extends StatelessWidget {
 
           child:
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              controller.reclamtionService(emailController,sujetController,descriptionController
+              );
+
+
+            },
             child: const Text('envoyer'),
           ),
 
@@ -298,7 +312,8 @@ class _DropdownButtonExampleState extends State<DropdownButtonExample> {
   @override
   Widget build(BuildContext context) {
     return DropdownButton<String>(
-      value: dropdownValue,
+
+      value:dropdownValue,
       icon: const Icon(Icons.arrow_downward),
       elevation: 16,
       style: const TextStyle(color: Color(0xff000000)),
@@ -310,6 +325,8 @@ class _DropdownButtonExampleState extends State<DropdownButtonExample> {
         // This is called when the user selects an item.
         setState(() {
           dropdownValue = value!;
+
+
         });
       },
 
@@ -317,7 +334,8 @@ class _DropdownButtonExampleState extends State<DropdownButtonExample> {
       items: list.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value),
+          child: Text(
+              value),
         );
       }).toList(),
     );
